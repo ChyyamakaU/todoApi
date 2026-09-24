@@ -1,10 +1,14 @@
 /* eslint-disable no-undef */
-const user = [
+const todo = [
 
-// {id: "1", task: "read a book", description: "Lorem iwjdwi"},
-// {id: "2", task: "Go shopping", description: "Lorem iwjdwi"},
-// {id: "3", task: "Go to the gym", description: "Lorem iwjdwi"},
-// {id: "4", task: "Go on a walk", description: "Lorem iwjdwi"}
+{
+    id: 1,
+    title: "Buy groceries",
+    description: "Buy milk and bread",
+    completed: false,
+    userId: 1,
+    createdAt: new Date()
+}
 ]
 
-module.exports = user
+module.exports = todo
