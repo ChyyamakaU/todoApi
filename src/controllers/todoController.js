@@ -1,7 +1,5 @@
-
 /* eslint-disable no-undef */
-
-let db = require("../../database/todo");
+const todos = require("../../database/todo");
 
 const addTodo = (req, res) => {
     const { title, description } = req.body;
@@ -14,15 +12,15 @@ const addTodo = (req, res) => {
     }
 
     const newTodo = {
-        id: db.length + 1,
+        id: todos.length + 1,
         title,
-        description,
+        description: description || "",
         completed: false,
         userId: req.user.id,
         createdAt: new Date()
     };
 
-    db.push(newTodo);
+    todos.push(newTodo);
 
     return res.status(201).json({
         status: "successful",
@@ -33,8 +31,7 @@ const addTodo = (req, res) => {
 
 
 const getTodo = (req, res) => {
-
-    const userTodos = db.filter(
+    const userTodos = todos.filter(
         (todo) => todo.userId === req.user.id
     );
 
@@ -46,10 +43,9 @@ const getTodo = (req, res) => {
 
 
 const getbyId = (req, res) => {
-
     const { id } = req.params;
 
-    const todo = db.find(
+    const todo = todos.find(
         (todo) =>
             todo.id === Number(id) &&
             todo.userId === req.user.id
@@ -70,11 +66,10 @@ const getbyId = (req, res) => {
 
 
 const updateTodo = (req, res) => {
-
     const { id } = req.params;
     const { title, description, completed } = req.body;
 
-    const todo = db.find(
+    const todo = todos.find(
         (todo) =>
             todo.id === Number(id) &&
             todo.userId === req.user.id
@@ -108,25 +103,22 @@ const updateTodo = (req, res) => {
 
 
 const deleteid = (req, res) => {
-
     const { id } = req.params;
 
-    const todo = db.find(
+    const todoIndex = todos.findIndex(
         (todo) =>
             todo.id === Number(id) &&
             todo.userId === req.user.id
     );
 
-    if (!todo) {
+    if (todoIndex === -1) {
         return res.status(404).json({
             status: "error",
             message: "Todo not found"
         });
     }
 
-    db = db.filter(
-        (todo) => todo.id !== Number(id)
-    );
+    todos.splice(todoIndex, 1);
 
     return res.status(200).json({
         status: "successful",
@@ -136,10 +128,9 @@ const deleteid = (req, res) => {
 
 
 module.exports = {
-    getTodo,
     addTodo,
+    getTodo,
     getbyId,
     updateTodo,
     deleteid
 };
-
