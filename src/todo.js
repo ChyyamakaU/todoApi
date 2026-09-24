@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-const todo = [
+const user = [
 
 // {id: "1", task: "read a book", description: "Lorem iwjdwi"},
 // {id: "2", task: "Go shopping", description: "Lorem iwjdwi"},
@@ -7,4 +7,4 @@ const todo = [
 // {id: "4", task: "Go on a walk", description: "Lorem iwjdwi"}
 ]
 
-module.exports = todo
+module.exports = user

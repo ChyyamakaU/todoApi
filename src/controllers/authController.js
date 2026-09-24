@@ -3,13 +3,13 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const todoList = require("../todo");
+const user = require("../todo");
 
 const registerNew = async (req, res) => {
 
     const { fullName, email, phone, password, role } = req.body;
 
-    const existingUser = todoList.find(
+    const existingUser = user.find(
         user => user.email === email
     );
 
@@ -49,7 +49,7 @@ const loginUser = async (req, res) => {
 
     const { email, password } = req.body;
 
-    const existingUser = todoList.find(
+    const existingUser = user.find(
         user => user.email === email
     );
 
