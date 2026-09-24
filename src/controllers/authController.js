@@ -4,7 +4,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const users = require("../todo");
+const users = require("../../database/todo");
 
 const registerNew = async (req, res) => {
     try {

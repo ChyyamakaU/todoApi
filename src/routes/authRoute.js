@@ -3,11 +3,11 @@ const express =require("express");
 const {registerNew, loginUser}= require("../controllers/authController")
 
 
-const router = express.Router()
+const authRouter = express.Router()
 
 
-router.post ("/register", registerNew)
-router.post("/login", loginUser)
+authRouter.post ("/register", registerNew)
+authRouter.post("/login", loginUser)
 
 
-module.exports=router
+module.exports=authRouter

@@ -1,7 +1,7 @@
 
 /* eslint-disable no-undef */
 
-let db = require("../todo");
+let db = require("../../database/todo");
 
 const addTodo = (req, res) => {
     const { title, description } = req.body;

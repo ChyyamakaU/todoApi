@@ -11,20 +11,19 @@ const {
     deleteid
 } = require("../controllers/todoController");
 
-const router = express.Router();
+const todoRouter = express.Router();
+
+todoRouter.use(authenticate);
 
 
-router.use(authenticate);
+todoRouter.post("/", addTodo);
 
+todoRouter.get("/all", getTodo);
 
-router.post("/", addTodo);
+todoRouter.get("/:id", getbyId);
 
-router.get("/", getTodo);
+todoRouter.put("/:id", updateTodo);
 
-router.get("/:id", getbyId);
+todoRouter.delete("/:id", deleteid);
 
-router.put("/:id", updateTodo);
-
-router.delete("/:id", deleteid);
-
-module.exports = router;
+module.exports = todoRouter;
