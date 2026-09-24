@@ -3,13 +3,13 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const bankUsers = require("../data");
+const todoList = require("../todo");
 
 const registerNew = async (req, res) => {
 
     const { fullName, email, phone, password, role } = req.body;
 
-    const existingUser = bankUsers.find(
+    const existingUser = todoList.find(
         user => user.email === email
     );
 
@@ -26,19 +26,17 @@ const registerNew = async (req, res) => {
     );
 
     const newUser = {
-        id: bankUsers.length + 1,
+        id: todoList.length + 1,
         fullName,
         email,
         phone,
         password: hashedPassword,
-        balance: 0,
-        accountNumber: String(1000000000 + bankUsers.length + 1),
         role
     };
 
-    bankUsers.push(newUser);
+    todoList.push(newUser);
 
-    console.log(bankUsers);
+    console.log(todoList);
 
     return res.status(201).json({
         status: "successful",
@@ -51,7 +49,7 @@ const loginUser = async (req, res) => {
 
     const { email, password } = req.body;
 
-    const existingUser = bankUsers.find(
+    const existingUser = todoList.find(
         user => user.email === email
     );
 
