@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 const express = require("express");
 
-const authenticate = require("../middleware/authenticate");
+const authenticate = require("../middleware/auth");
 
 const {
     getTodo, addTodo, getbyId, updateTodo,  deleteid} = require("../controllers/todoController");
