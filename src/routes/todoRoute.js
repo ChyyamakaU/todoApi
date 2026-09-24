@@ -4,21 +4,15 @@ const express = require("express");
 const authenticate = require("../middleware/authenticate");
 
 const {
-    getTodo,
-    addTodo,
-    getbyId,
-    updateTodo,
-    deleteid
-} = require("../controllers/todoController");
+    getTodo, addTodo, getbyId, updateTodo,  deleteid} = require("../controllers/todoController");
 
 const todoRouter = express.Router();
 
 todoRouter.use(authenticate);
 
-
 todoRouter.post("/", addTodo);
 
-todoRouter.get("/all", getTodo);
+todoRouter.get("/", getTodo);
 
 todoRouter.get("/:id", getbyId);
 
