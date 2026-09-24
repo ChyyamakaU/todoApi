@@ -111,13 +111,11 @@ const deleteid = (req, res) => {
 
     const { id } = req.params;
 
-    const index = db.findIndex(
+    const todo = db.find(
         (todo) =>
             todo.id === Number(id) &&
             todo.userId === req.user.id
     );
-
-    db.splice(index, 1);
 
     if (!todo) {
         return res.status(404).json({
