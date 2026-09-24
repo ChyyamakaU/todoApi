@@ -1,14 +1,20 @@
-
+/* eslint-disable no-unused-vars */
 /* eslint-disable no-undef */
-
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const users = require("../../database/todo");
+const users = require("../../database/user");
 
 const registerNew = async (req, res) => {
     try {
         const { fullName, email, phone, password } = req.body;
+
+        if (!fullName || !email || !phone || !password) {
+            return res.status(400).json({
+                status: "error",
+                message: "All fields are required"
+            });
+        }
 
         const existingUser = users.find(
             (user) => user.email === email
@@ -31,8 +37,7 @@ const registerNew = async (req, res) => {
             fullName,
             email,
             phone,
-            password: hashedPassword,
-            
+            password: hashedPassword
         };
 
         users.push(newUser);
@@ -45,8 +50,7 @@ const registerNew = async (req, res) => {
     } catch (error) {
         return res.status(500).json({
             status: "error",
-            message: "Something went wrong",
-            error: error.message
+            message: "Something went wrong"
         });
     }
 };
@@ -55,6 +59,13 @@ const registerNew = async (req, res) => {
 const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({
+                status: "error",
+                message: "Email and password are required"
+            });
+        }
 
         const existingUser = users.find(
             (user) => user.email === email
@@ -98,8 +109,7 @@ const loginUser = async (req, res) => {
     } catch (error) {
         return res.status(500).json({
             status: "error",
-            message: "Something went wrong",
-            error: error.message
+            message: "Something went wrong"
         });
     }
 };
