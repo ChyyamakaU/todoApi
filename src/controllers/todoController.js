@@ -32,7 +32,6 @@ const addTodo = (req, res) => {
 };
 
 
-// GET ALL TODOS BELONGING TO LOGGED-IN USER
 const getTodo = (req, res) => {
 
     const userTodos = db.filter(
@@ -112,11 +111,13 @@ const deleteid = (req, res) => {
 
     const { id } = req.params;
 
-    const todo = db.find(
+    const index = db.findIndex(
         (todo) =>
             todo.id === Number(id) &&
             todo.userId === req.user.id
     );
+
+    db.splice(index, 1);
 
     if (!todo) {
         return res.status(404).json({
