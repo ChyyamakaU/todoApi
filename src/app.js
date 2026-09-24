@@ -1,11 +1,13 @@
 /* eslint-disable no-undef */
-const express = require ("express")
-const router =require("./routes/authRoute")
 
-const app = express()
-app.use(express.json()) 
+const express = require("express");
 
-app.use("/user", router)
+const router = require("./routes/authRoute");
 
+const app = express();
 
-module.exports=app
+app.use(express.json());
+
+app.use("/api/auth", router);
+
+module.exports = app;
