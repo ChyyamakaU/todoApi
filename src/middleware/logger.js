@@ -1,10 +1,8 @@
 /* eslint-disable no-undef */
-const logger = (req, res, next) => {
-    console.log(
-        `${new Date().toISOString()} - ${req.method} ${req.originalUrl}`
-    );
+const logger =(req)=>{
+console.log(req.url, req.method)
 
-    next();
-};
 
-module.exports = logger;
+}
+
+module.exports= logger
