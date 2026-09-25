@@ -14,7 +14,7 @@ const addTodo = (req, res) => {
     const newTodo = {
         id: todos.length + 1,
         title,
-        description: description || "",
+        description: description,
         completed: false,
         userId: req.user.id,
         createdAt: new Date()

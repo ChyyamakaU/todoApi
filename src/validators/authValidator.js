@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const { body } = require("express-validator");
 
 const registerValidator = [
