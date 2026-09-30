@@ -1,0 +1,605 @@
+openapi: 3.0.3
+info:
+  title: Todo API
+  version: 1.0.0
+  description: |
+    REST API for registering users, signing in, and managing authenticated users' todos.
+
+    The current implementation stores users and todos in process memory. Data is reset
+    whenever the server restarts. Todos are only returned to the user identified by the
+    access token.
+
+    The `GET /api/auth/view` endpoint is retained for compatibility with the current
+    implementation. It is public and returns internal user records, including password
+    hashes, so it must not be exposed in production.
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+  - url: "{protocol}://{host}:{port}"
+    description: Configurable API server
+    variables:
+      protocol:
+        default: http
+        enum:
+          - http
+          - https
+      host:
+        default: localhost
+      port:
+        default: "5000"
+tags:
+  - name: Authentication
+    description: Registration, login, and legacy user inspection
+  - name: Todos
+    description: Authenticated todo CRUD operations
+paths:
+  /api/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a user
+      description: Create a user account. Email uniqueness is checked by the server.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              fullName: Ada Lovelace
+              email: ada@example.com
+              phone: "+15550100001"
+              password: correct-horse-battery-staple
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+              example:
+                status: successful
+                message: You have registered successfully
+        '400':
+          description: One or more required fields are missing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: error
+                message: All fields are required
+        '409':
+          description: The email is already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: error
+                message: This email already exists
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Log in a user
+      description: Authenticate with email and password and receive a one-hour JWT access token.
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: ada@example.com
+              password: correct-horse-battery-staple
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              example:
+                status: successful
+                message: You have been successfully logged in
+                token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.signature
+        '400':
+          description: Email or password is missing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: error
+                message: Email and password are required
+        '401':
+          description: The email or password is incorrect
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: error
+                message: Invalid email or password
+  /api/auth/view:
+    get:
+      tags:
+        - Authentication
+      summary: View all users
+      deprecated: true
+      description: |
+        Legacy/debug endpoint. It is currently public and returns the complete in-memory
+        user array, including bcrypt password hashes. Do not use or expose this endpoint in
+        production.
+      operationId: viewAllUsers
+      responses:
+        '200':
+          description: All users currently stored by the server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViewAllUsersResponse'
+              example:
+                viewAll: []
+  /api/todos:
+    post:
+      tags:
+        - Todos
+      summary: Create a todo
+      operationId: createTodo
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTodoRequest'
+            example:
+              title: Buy groceries
+              description: Buy milk and bread
+      responses:
+        '201':
+          description: Todo created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTodoResponse'
+              example:
+                status: successful
+                message: Todo created successfully
+                todo:
+                  id: 1
+                  title: Buy groceries
+                  description: Buy milk and bread
+                  completed: false
+                  userId: 1
+                  createdAt: "2026-01-15T10:30:00.000Z"
+        '400':
+          description: Title is missing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: error
+                message: Title is required
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    get:
+      tags:
+        - Todos
+      summary: List the authenticated user's todos
+      operationId: listTodos
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: The authenticated user's todos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoListResponse'
+              example:
+                status: successful
+                todos: []
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/todos/{id}:
+    parameters:
+      - $ref: '#/components/parameters/TodoId'
+    get:
+      tags:
+        - Todos
+      summary: Get a todo
+      description: Returns the todo only when it belongs to the authenticated user.
+      operationId: getTodo
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Todo found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoResponse'
+              example:
+                status: successful
+                todo:
+                  id: 1
+                  title: Buy groceries
+                  description: Buy milk and bread
+                  completed: false
+                  userId: 1
+                  createdAt: "2026-01-15T10:30:00.000Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Todo does not exist or does not belong to the authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: error
+                message: Todo not found
+    put:
+      tags:
+        - Todos
+      summary: Update a todo
+      description: Updates only the fields supplied in the request body.
+      operationId: updateTodo
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTodoRequest'
+            examples:
+              complete:
+                value:
+                  completed: true
+              updateText:
+                value:
+                  title: Buy groceries and household supplies
+                  description: Milk, bread, and eggs
+      responses:
+        '200':
+          description: Todo updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateTodoResponse'
+              example:
+                status: successful
+                message: Todo updated successfully
+                todo:
+                  id: 1
+                  title: Buy groceries and household supplies
+                  description: Milk, bread, and eggs
+                  completed: true
+                  userId: 1
+                  createdAt: "2026-01-15T10:30:00.000Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Todo does not exist or does not belong to the authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: error
+                message: Todo not found
+    delete:
+      tags:
+        - Todos
+      summary: Delete a todo
+      operationId: deleteTodo
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Todo deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteTodoResponse'
+              example:
+                status: successful
+                message: Todo deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Todo does not exist or does not belong to the authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: error
+                message: Todo not found
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Use the token returned by `POST /api/auth/login`.
+  parameters:
+    TodoId:
+      name: id
+      in: path
+      required: true
+      description: Numeric todo identifier
+      schema:
+        type: integer
+        format: int64
+  responses:
+    Unauthorized:
+      description: Missing, malformed, invalid, or expired JWT
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missingToken:
+              value:
+                status: error
+                message: Authentication token is required
+            malformedToken:
+              value:
+                status: error
+                message: Invalid authorization format
+            invalidToken:
+              value:
+                status: error
+                message: Invalid or expired token
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: string
+          enum:
+            - error
+          example: error
+        message:
+          type: string
+          example: Title is required
+    RegisterRequest:
+      type: object
+      required:
+        - fullName
+        - email
+        - phone
+        - password
+      properties:
+        fullName:
+          type: string
+          example: Ada Lovelace
+        email:
+          type: string
+          example: ada@example.com
+        phone:
+          type: string
+          example: "+15550100001"
+        password:
+          type: string
+          format: password
+          example: correct-horse-battery-staple
+    RegisterResponse:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: string
+          enum:
+            - successful
+        message:
+          type: string
+          example: You have registered successfully
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          example: ada@example.com
+        password:
+          type: string
+          format: password
+          example: correct-horse-battery-staple
+    LoginResponse:
+      type: object
+      required:
+        - status
+        - message
+        - token
+      properties:
+        status:
+          type: string
+          enum:
+            - successful
+        message:
+          type: string
+          example: You have been successfully logged in
+        token:
+          type: string
+          description: JWT access token valid for one hour
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.signature
+    UserRecord:
+      type: object
+      required:
+        - id
+        - fullName
+        - email
+        - phone
+        - password
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        fullName:
+          type: string
+          example: Ada Lovelace
+        email:
+          type: string
+          example: ada@example.com
+        phone:
+          type: string
+          example: "+15550100001"
+        password:
+          type: string
+          format: password
+          description: bcrypt password hash returned by the legacy debug endpoint
+          example: $2b$12$examplebcrypthash
+    ViewAllUsersResponse:
+      type: object
+      required:
+        - viewAll
+      properties:
+        viewAll:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserRecord'
+    CreateTodoRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          example: Buy groceries
+        description:
+          type: string
+          nullable: true
+          example: Buy milk and bread
+    Todo:
+      type: object
+      required:
+        - id
+        - title
+        - completed
+        - userId
+        - createdAt
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: Buy groceries
+        description:
+          type: string
+          nullable: true
+          example: Buy milk and bread
+        completed:
+          type: boolean
+          example: false
+        userId:
+          type: integer
+          format: int64
+          example: 1
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-01-15T10:30:00.000Z"
+    CreateTodoResponse:
+      type: object
+      required:
+        - status
+        - message
+        - todo
+      properties:
+        status:
+          type: string
+          enum:
+            - successful
+        message:
+          type: string
+          example: Todo created successfully
+        todo:
+          $ref: '#/components/schemas/Todo'
+    TodoResponse:
+      type: object
+      required:
+        - status
+        - todo
+      properties:
+        status:
+          type: string
+          enum:
+            - successful
+        todo:
+          $ref: '#/components/schemas/Todo'
+    TodoListResponse:
+      type: object
+      required:
+        - status
+        - todos
+      properties:
+        status:
+          type: string
+          enum:
+            - successful
+        todos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Todo'
+    UpdateTodoRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          example: Buy groceries and household supplies
+        description:
+          type: string
+          nullable: true
+          example: Milk, bread, and eggs
+        completed:
+          type: boolean
+          example: true
+    UpdateTodoResponse:
+      type: object
+      required:
+        - status
+        - message
+        - todo
+      properties:
+        status:
+          type: string
+          enum:
+            - successful
+        message:
+          type: string
+          example: Todo updated successfully
+        todo:
+          $ref: '#/components/schemas/Todo'
+    DeleteTodoResponse:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: string
+          enum:
+            - successful
+        message:
+          type: string
+          example: Todo deleted successfully
