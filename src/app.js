@@ -3,7 +3,7 @@ const express = require("express");
 
 const authRouter = require("./routes/authRoute");
 const todoRouter = require("./routes/todoRoute");
-
+const userRouter = require("./routes/userRoute")
 const logger = require("./middleware/logger");
 const limiter = require("./middleware/rateLimit");
 const errorHandler = require("./middleware/error");
@@ -15,6 +15,7 @@ app.use(express.json());
 app.use("/api/auth", authRouter);
 
 app.use("/api/todos", todoRouter);
+app.use("/api/users", userRouter)
 
 
 app.use(logger);

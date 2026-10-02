@@ -1,35 +1,25 @@
-
 /* eslint-disable no-undef */
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-
-const users = require("../../database/user");
-
-const allUsers = async (req, res)=>{
-
-    console.log(users)
-    return res.status(200).json({
-        "viewAll" : users
-    })
-}
-
+const pool = require("../db");
 
 const registerNew = async (req, res) => {
-    
-        const { fullName, email, phone, password } = req.body;
+    try {
+        const { fullName, email, password } = req.body;
 
-        if (!fullName || !email || !phone || !password) {
+        if (!fullName || !email || !password) {
             return res.status(400).json({
                 status: "error",
-                message: "All fields are required"
+                message: "Full name, email and password are required"
             });
         }
 
-        const existingUser = users.find(
-            (user) => user.email === email
+        const existingUser = await pool.query(
+            "SELECT * FROM users WHERE email = $1",
+            [email]
         );
 
-        if (existingUser) {
+        if (existingUser.rows.length > 0) {
             return res.status(409).json({
                 status: "error",
                 message: "This email already exists"
@@ -41,27 +31,29 @@ const registerNew = async (req, res) => {
             Number(process.env.SALT_ROUNDS)
         );
 
-        const newUser = {
-            id: users.length + 1,
-            fullName,
-            email,
-            phone,
-            password: hashedPassword
-        };
-
-        users.push(newUser);
+        await pool.query(
+            "INSERT INTO users (name, email, password) VALUES ($1, $2, $3)",
+            [fullName, email, hashedPassword]
+        );
 
         return res.status(201).json({
             status: "successful",
             message: "You have registered successfully"
         });
 
-    } 
-;
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            status: "error",
+            message: "Something went wrong"
+        });
+    }
+};
 
 
 const loginUser = async (req, res) => {
-    
+    try {
         const { email, password } = req.body;
 
         if (!email || !password) {
@@ -71,16 +63,19 @@ const loginUser = async (req, res) => {
             });
         }
 
-        const existingUser = users.find(
-            (user) => user.email === email
+        const result = await pool.query(
+            "SELECT * FROM users WHERE email = $1",
+            [email]
         );
 
-        if (!existingUser) {
+        if (result.rows.length === 0) {
             return res.status(401).json({
                 status: "error",
                 message: "Invalid email or password"
             });
         }
+
+        const existingUser = result.rows[0];
 
         const passwordMatch = await bcrypt.compare(
             password,
@@ -110,11 +105,18 @@ const loginUser = async (req, res) => {
             token
         });
 
-    };
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            status: "error",
+            message: "Something went wrong"
+        });
+    }
+};
 
 
 module.exports = {
-    allUsers,
     registerNew,
     loginUser
 };
